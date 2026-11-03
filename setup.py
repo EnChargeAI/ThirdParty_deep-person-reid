@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import os.path as osp
 from setuptools import setup, find_packages
@@ -14,8 +16,10 @@ def readme():
 def find_version():
     version_file = 'torchreid/__init__.py'
     with open(version_file, 'r') as f:
-        exec(compile(f.read(), version_file, 'exec'))
-    return locals()['__version__']
+        match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", f.read(), re.M)
+    if match is None:
+        raise RuntimeError('Unable to find version string.')
+    return match.group(1)
 
 
 def numpy_include():
@@ -38,7 +42,11 @@ ext_modules = [
 def get_requirements(filename='requirements.txt'):
     here = osp.dirname(osp.realpath(__file__))
     with open(osp.join(here, filename), 'r') as f:
-        requires = [line.replace('\n', '') for line in f.readlines()]
+        requires = []
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#'):
+                requires.append(line)
     return requires
 
 
